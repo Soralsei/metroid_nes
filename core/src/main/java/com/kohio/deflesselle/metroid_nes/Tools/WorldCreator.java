@@ -58,38 +58,6 @@ public class WorldCreator {
             fdef.shape = shape;
             body.createFixture(fdef).setUserData("ground");
         }
-        for (PolygonMapObject object :
-                m.getLayers().get("ground").getObjects().getByType(PolygonMapObject.class)) {
-
-            Polygon p = object.getPolygon();
-            Rectangle r = p.getBoundingRectangle();
-            Gdx.app.log("WorldCreation : ground X", Float.toString(r.getX()));
-            Gdx.app.log("WorldCreation : ground Y", Float.toString(r.getY()));
-
-            bdef.type = BodyDef.BodyType.StaticBody;
-            bdef.position.set(
-                    r.getX() / PPU,
-                    (r.getY() + r.getHeight() / 2) / PPU
-            );
-            body = w.createBody(bdef);
-
-            float[] vertices = new float[p.getVertices().length];
-            for (int i = 0; i < p.getVertices().length; i++) {
-                vertices[i] = p.getVertices()[i];
-                vertices[i] *= 1/PPU;
-            }
-
-            Gdx.app.log("PolygonCreation", "Vertices : " + Arrays.toString(p.getVertices()));
-            Gdx.app.log("PolygonCreation", "Transformed vertices : " + Arrays.toString(vertices));
-
-            shape.set(vertices);
-            fdef.shape = shape;
-
-            Gdx.app.log("PolygonCreation", "shape vertex count : " + shape.getVertexCount());
-            Gdx.app.log("PolygonCreation", "shape vertex count : " + (vertices.length / 2));
-
-            body.createFixture(fdef).setUserData("ground");
-        }
 
         for (MapObject object :
                 m.getLayers().get("items_collision").getObjects().getByType(RectangleMapObject.class)) {
