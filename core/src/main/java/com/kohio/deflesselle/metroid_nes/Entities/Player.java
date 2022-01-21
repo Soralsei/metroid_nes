@@ -93,7 +93,7 @@ public class Player extends Sprite {
         setRegion(samusIdle);
 
         //Inventory setup
-        inventory = 1;
+        inventory = 0;
     }
 
     //All player animations

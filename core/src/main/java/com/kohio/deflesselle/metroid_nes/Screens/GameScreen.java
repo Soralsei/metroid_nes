@@ -105,7 +105,7 @@ public class GameScreen extends ScreenAdapter implements CutscenePlayer {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         game.batch.setProjectionMatrix(cam.combined);
-        /*game.batch.begin();
+        game.batch.begin();
 
         //Render background tilemap
         renderer.renderTileLayer((TiledMapTileLayer) map.getLayers().get("background"));
@@ -122,7 +122,7 @@ public class GameScreen extends ScreenAdapter implements CutscenePlayer {
         }
         //then render foreground
         renderer.renderTileLayer((TiledMapTileLayer) mapLayers.get(2));
-        game.batch.end();*/
+        game.batch.end();
 
         debugRenderer.render(world, cam.combined);
 
