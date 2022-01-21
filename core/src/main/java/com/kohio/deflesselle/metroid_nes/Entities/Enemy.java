@@ -35,5 +35,6 @@ public abstract class Enemy extends Sprite {
     public abstract void update(float deltaTime);
     public abstract void animate(float deltaTime);
     public abstract void onCollision();
-    
+
+    public abstract void wake();
 }

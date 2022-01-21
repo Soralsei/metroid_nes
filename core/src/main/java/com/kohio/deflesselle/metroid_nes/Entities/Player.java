@@ -5,9 +5,11 @@ import static com.kohio.deflesselle.metroid_nes.Metroid.PPU;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -27,8 +29,11 @@ public class Player extends Sprite {
     //Edge Shapes
     private static final float EDGE_X1 = -6 / PPU;
     private static final float EDGE_X2 = 6 / PPU;
-    private static final float EDGE_Y1 = 17 / PPU;
-    private static final float EDGE_Y2 = -17 / PPU;
+    private static final float EDGE_Y1 = 15.5f / PPU;
+    private static final float EDGE_Y2 = -15.5f / PPU;
+    //Vectors
+    private static final Vector2 KNOCK_BACK_F = new Vector2(4f, 4f);
+    private static final Vector2 KNOCK_BACK_B = new Vector2(-4f, 4f);
     //Animations
     private TextureRegion samusIdle;
     private Animation<TextureRegion> runAnim;
@@ -44,6 +49,11 @@ public class Player extends Sprite {
     private AnimState currentAnimState;
     private AnimState previousAnimState;
     private float stateTimer = 0;
+    //Util variables for player animation and orientation
+    private static final float VERTICAL_THRESHOLD = 0.001f;
+    public static final short LEFT = 1;
+    public static final short RIGHT = 2;
+    public short previous = LEFT;
 
     //Player flags
     public boolean isMorphBall = false;
@@ -54,12 +64,8 @@ public class Player extends Sprite {
     public boolean isGoingRight = false;
     public boolean isGoingLeft = false;
     public boolean jumpKeyHeld = false;
+    private boolean isCollidingWithDamage = false;
 
-    //Util variables for player animation and orientation
-    private static final float VERTICAL_THRESHOLD = 0.001f;
-    public static final short LEFT = 1;
-    public static final short RIGHT = 2;
-    public short previous = LEFT;
 
     //Player variables like health and ammo
     public static final float JUMP = 13f;
@@ -70,9 +76,13 @@ public class Player extends Sprite {
     private int currentMissiles;
     //Inventory
     private short inventory;
+
+    //Damage related fields
+    private float alpha = 1f;
     private boolean isInvincible = false;
     private float invincibleTimer = 0f;
-    private static final float INVINCIBILITY_TIME = 2f;
+    private static final float INVINCIBILITY_TIME = .75f;
+    private boolean isKnockedBack = false;
 
 
     public Player(World world, TextureAtlas atlas){
@@ -185,6 +195,7 @@ public class Player extends Sprite {
         if(yVel == 0) isJumping = false;
         //Invincibility frames
         if (invincibleTimer > 0) {
+            alpha += deltaTime * 30f;
             invincibleTimer -= deltaTime;
         }
         else if (isInvincible){
@@ -200,13 +211,12 @@ public class Player extends Sprite {
         if (currentState == Player.MoveState.RUN) {
             if (isGoingLeft && isGoingRight) {
                 body.setLinearVelocity(new Vector2(0, vel.y));
-            } else if (isGoingRight) {
-                body.setLinearVelocity(new Vector2(SPEED, vel.y));
-            } else {
-                body.setLinearVelocity(new Vector2(-SPEED, vel.y));
+            } else if (!isKnockedBack || !isInvincible){
+                if (isGoingRight) body.setLinearVelocity(new Vector2(SPEED, vel.y));
+                else body.setLinearVelocity(new Vector2(-SPEED, vel.y));
             }
         } else {
-            if (!isSpinJumping || isGrounded)
+            if ((!isSpinJumping || isGrounded) && !isKnockedBack)
                 body.setLinearVelocity(0, body.getLinearVelocity().y);
         }
     }
@@ -363,12 +373,20 @@ public class Player extends Sprite {
         else if (data instanceof Enemy && !isInvincible) {
             Enemy enemy = (Enemy) data;
             damage(enemy.contactDamage);
-            knockback(enemy.body.getPosition().x);
+            knockback(enemy.body.getWorldCenter().x);
         }
     }
 
     private void knockback(float x) {
         Gdx.app.log("Player", "Knockback from " + body.getPosition().x + " to " + x);
+        isKnockedBack = true;
+        isSpinJumping = false;
+        this.body.setLinearVelocity(0,0);
+        if (this.body.getWorldCenter().x >= x) {
+            this.body.applyLinearImpulse(KNOCK_BACK_F, this.body.getWorldCenter(), true);
+        } else {
+            this.body.applyLinearImpulse(KNOCK_BACK_B, this.body.getWorldCenter(), true);
+        }
     }
     private void damage(int contactDamage) {
         energy -= contactDamage;
@@ -383,7 +401,11 @@ public class Player extends Sprite {
 
     public void setGrounded(boolean b) {
         isGrounded = b;
-        if(isGrounded) isSpinJumping = false;
+        if(b) {
+            isSpinJumping = false;
+            isKnockedBack = false;
+        }
+
     }
 
     public void updatePrevious(int keycode) {
@@ -393,6 +415,11 @@ public class Player extends Sprite {
         else {
             previous = RIGHT;
         }
+    }
+
+    public void drawSprite(Batch batch) {
+        if (isInvincible) super.draw(batch, Math.abs(MathUtils.sin(alpha)));
+        else super.draw(batch);
     }
 
     public enum MoveState{

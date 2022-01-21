@@ -112,12 +112,21 @@ public class GameScreen extends ScreenAdapter implements CutscenePlayer {
         renderer.renderTileLayer((TiledMapTileLayer) mapLayers.get(1));
 
         //then render player
-        samus.draw(game.batch);
+        samus.drawSprite(game.batch);
         if (!(currentEvent instanceof ItemGetEvent)) {
             for (Enemy enemy :
                     enemies) {
-                if(entityIsOnScreen(enemy))
+                if(entityIsOnScreen(enemy)) {
+                    if (!enemy.body.isActive()) {
+                        enemy.body.setActive(true);
+                        enemy.body.setAwake(true);
+                        enemy.wake();
+                    }
                     enemy.draw(game.batch);
+                }
+                else {
+                    enemy.body.setActive(false);
+                }
             }
         }
         //then render foreground

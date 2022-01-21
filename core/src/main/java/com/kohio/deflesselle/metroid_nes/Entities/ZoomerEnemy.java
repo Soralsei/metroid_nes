@@ -16,7 +16,7 @@ import java.util.LinkedList;
 
 public class ZoomerEnemy extends Enemy{
 
-    private LinkedList<Vector2> normals = new LinkedList<>();
+    private final LinkedList<Vector2> normals = new LinkedList<>();
 
     private final Type color;
     @SuppressWarnings("FieldCanBeLocal")
@@ -25,7 +25,6 @@ public class ZoomerEnemy extends Enemy{
 
     private final Vector2 speedXY;
     private float rotationAngleBuffer = 0f;
-    private boolean canRotate = false;
 
     public ZoomerEnemy(float x, float y, boolean orientation, float width, float height, float speed, Type color,
                        World world, TextureAtlas atlas) {
@@ -84,7 +83,7 @@ public class ZoomerEnemy extends Enemy{
 
         fdef.shape = shape;
         fdef.filter.categoryBits = Metroid.ENEMY_BIT;
-        fdef.filter.maskBits = GROUND_BIT;
+        fdef.filter.maskBits = GROUND_BIT | Metroid.PLAYER_BIT;
         fdef.isSensor = true;
 
         this.body.createFixture(fdef).setUserData(this);
@@ -126,7 +125,7 @@ public class ZoomerEnemy extends Enemy{
 
             wallDetector.set(
                     new Vector2((-width + .2f) / 2, 0),
-                    new Vector2((-width + .1f) / 2, 0)
+                    new Vector2((-width + .2f) / 2, 0)
             );
 
             fdef.shape = wallDetector;
@@ -160,10 +159,6 @@ public class ZoomerEnemy extends Enemy{
         }
     }
 
-    public void setRotatePossible(boolean value) {
-        canRotate = value;
-    }
-
     public void changeDirection(boolean clockWise){
 
         rotate90(clockWise);
@@ -184,8 +179,9 @@ public class ZoomerEnemy extends Enemy{
 
     }
 
-    public boolean canRotate() {
-        return canRotate;
+    @Override
+    public void wake() {
+        this.body.setLinearVelocity(this.speedXY);
     }
 
     public void addNormal(Vector2 normal) {
